@@ -497,7 +497,12 @@ function MoodGrid({ points, lang = 'en' }) {
 
 function App() {
   const [apiBaseUrl, setApiBaseUrl] = useState(defaultApiBaseUrl)
-  const [userId, setUserId] = useState(defaultUserId)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('auth_session')
+  })
+  const [userId, setUserId] = useState(() => {
+    return localStorage.getItem('auth_session') || defaultUserId
+  })
   const [points, setPoints] = useState([])
   const [entries, setEntries] = useState([])
   const [status, setStatus] = useState('idle')
@@ -532,6 +537,9 @@ function App() {
   // Quiz states
   const [quizStep, setQuizStep] = useState(0)
   const [quizAnswers, setQuizAnswers] = useState([])
+  const [authMode, setAuthMode] = useState('login')
+  const [authUsername, setAuthUsername] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
 
   useEffect(() => {
     if (toastMessage) {
@@ -810,6 +818,121 @@ function App() {
     return lang === 'hi' ? 'उच्च' : 'High'
   }, [entries, lang])
 
+  const handleAuthSubmit = (e) => {
+    e.preventDefault()
+    const username = authUsername.trim()
+    if (!username) {
+      showToast(lang === 'en' ? 'Please enter a username.' : 'कृपया उपयोगकर्ता नाम दर्ज करें।', 'error')
+      return
+    }
+    
+    localStorage.setItem('auth_session', username)
+    setUserId(username)
+    setIsAuthenticated(true)
+    setActiveTab('landing')
+    setAuthUsername('')
+    setAuthPassword('')
+    showToast(
+      lang === 'en' ? `Welcome, ${username}!` : `स्वागत है, ${username}!`,
+      'success'
+    )
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_session')
+    setIsAuthenticated(false)
+    setUserId('Surya')
+    setActiveTab('landing')
+    setAuthUsername('')
+    setAuthPassword('')
+    setShowSettings(false)
+    showToast(
+      lang === 'en' ? 'Logged out successfully.' : 'सफलतापूर्वक लॉग आउट किया गया।',
+      'success'
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main className="app-shell login-shell">
+        <section className="login-container">
+          <div className="landing-lang-switcher">
+            <button type="button" className={`lang-btn ${lang === 'en' ? 'active' : ''}`} onClick={() => setLang('en')}>EN</button>
+            <button type="button" className={`lang-btn ${lang === 'hi' ? 'active' : ''}`} onClick={() => setLang('hi')}>हिन्दी</button>
+          </div>
+
+          <div className="login-card fade-in">
+            <div className="login-header">
+              <span className="login-logo-icon">🧘</span>
+              <h1>${lang === 'en' ? 'Wellness Tracker' : 'कल्याण ट्रैकर'}</h1>
+              <p>${lang === 'en' ? 'Track mood, stress, and habits securely' : 'मूड, तनाव और आदतों को सुरक्षित रूप से ट्रैक करें'}</p>
+            </div>
+
+            <div className="auth-tabs" role="tablist">
+              <button 
+                type="button" 
+                role="tab"
+                aria-selected={authMode === 'login'}
+                className={`auth-tab-btn ${authMode === 'login' ? 'active' : ''}`}
+                onClick={() => setAuthMode('login')}
+              >
+                ${lang === 'en' ? 'Login' : 'लॉग इन'}
+              </button>
+              <button 
+                type="button" 
+                role="tab"
+                aria-selected={authMode === 'signup'}
+                className={`auth-tab-btn ${authMode === 'signup' ? 'active' : ''}`}
+                onClick={() => setAuthMode('signup')}
+              >
+                ${lang === 'en' ? 'Sign Up' : 'साइन अप'}
+              </button>
+            </div>
+
+            <form onSubmit={handleAuthSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="auth-username">${lang === 'en' ? 'Username' : 'उपयोगकर्ता नाम'}</label>
+                <input
+                  type="text"
+                  id="auth-username"
+                  value={authUsername}
+                  onChange={(e) => setAuthUsername(e.target.value)}
+                  placeholder={`${lang === 'en' ? 'Enter username' : 'उपयोगकर्ता नाम दर्ज करें'}`}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="auth-password">${lang === 'en' ? 'Password' : 'पासवर्ड'}</label>
+                <input
+                  type="password"
+                  id="auth-password"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  placeholder={`${lang === 'en' ? 'Enter password' : 'पासवर्ड दर्ज करें'}`}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="login-submit-btn">
+                ${authMode === 'login' 
+                  ? (lang === 'en' ? 'Access Dashboard' : 'डैशबोर्ड खोलें')
+                  : (lang === 'en' ? 'Create Account' : 'खाता बनाएँ')}
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {toastMessage && (
+          <div className={`toast-alert toast-${submitStatus} fade-in`} role="alert">
+            <span className="toast-icon">{submitStatus === 'success' ? '✓' : '⚠️'}</span>
+            <span className="toast-text">{toastMessage}</span>
+          </div>
+        )}
+      </main>
+    )
+  }
+
   return (
     <main className="app-shell">
       {activeTab === 'landing' ? (
@@ -886,6 +1009,11 @@ function App() {
                     <input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="Surya" />
                   </label>
                 </form>
+                <div className="settings-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="button" className="primary-button logout-btn" onClick={handleLogout} style={{ background: 'var(--stress-deep)' }}>
+                    ${lang === 'en' ? 'Logout' : 'लॉग आउट'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
