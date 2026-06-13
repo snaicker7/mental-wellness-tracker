@@ -841,7 +841,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('auth_session')
     setIsAuthenticated(false)
-    setUserId('Surya')
+    setUserId(defaultUserId)
     setActiveTab('landing')
     setAuthUsername('')
     setAuthPassword('')
@@ -997,7 +997,7 @@ function App() {
               <div className="settings-panel">
                 <div className="settings-header">
                   <h3>App Settings</h3>
-                  <button type="button" className="close-btn" onClick={() => setShowSettings(false)}>&times;</button>
+                  <button type="button" className="close-btn" onClick={() => setShowSettings(false)} aria-label={t.closeModal}>&times;</button>
                 </div>
                 <form className="controls" onSubmit={(e) => e.preventDefault()}>
                   <label>
@@ -1011,7 +1011,7 @@ function App() {
                 </form>
                 <div className="settings-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button type="button" className="primary-button logout-btn" onClick={handleLogout} style={{ background: 'var(--stress-deep)' }}>
-                    ${lang === 'en' ? 'Logout' : 'लॉग आउट'}
+                    {lang === 'en' ? 'Logout' : 'लॉग आउट'}
                   </button>
                 </div>
               </div>
