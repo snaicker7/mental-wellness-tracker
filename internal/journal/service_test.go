@@ -3,6 +3,7 @@ package journal
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -31,13 +32,74 @@ func TestValidateAndSanitize(t *testing.T) {
 }
 
 func TestValidateAndSanitizeRejectsInvalidPayload(t *testing.T) {
-	_, err := validateAndSanitize(CreateEntryRequest{
-		UserID:    "student-1",
-		EntryText: "",
-		MoodLevel: 11,
-	})
-	if err == nil {
-		t.Fatal("expected validation error")
+	valid := CreateEntryRequest{
+		UserID:            "student-1",
+		EntryText:         "I took a focused break.",
+		MoodLevel:         5,
+		EnergyLevel:       5,
+		SleepHours:        7,
+		StudyHours:        6,
+		ExamCountdownDays: 10,
+	}
+
+	tests := []struct {
+		name   string
+		mutate func(*CreateEntryRequest)
+	}{
+		{"missing user", func(r *CreateEntryRequest) { r.UserID = "" }},
+		{"invalid user utf8", func(r *CreateEntryRequest) { r.UserID = string([]byte{0xff}) }},
+		{"user too long", func(r *CreateEntryRequest) { r.UserID = strings.Repeat("a", maxUserIDLen+1) }},
+		{"missing entry", func(r *CreateEntryRequest) { r.EntryText = "" }},
+		{"invalid entry utf8", func(r *CreateEntryRequest) { r.EntryText = string([]byte{0xff}) }},
+		{"entry too long", func(r *CreateEntryRequest) { r.EntryText = strings.Repeat("a", maxEntryText+1) }},
+		{"low mood", func(r *CreateEntryRequest) { r.MoodLevel = 0 }},
+		{"high mood", func(r *CreateEntryRequest) { r.MoodLevel = 11 }},
+		{"low energy", func(r *CreateEntryRequest) { r.EnergyLevel = 0 }},
+		{"high energy", func(r *CreateEntryRequest) { r.EnergyLevel = 11 }},
+		{"low sleep", func(r *CreateEntryRequest) { r.SleepHours = -0.1 }},
+		{"high sleep", func(r *CreateEntryRequest) { r.SleepHours = 24.1 }},
+		{"low study", func(r *CreateEntryRequest) { r.StudyHours = -0.1 }},
+		{"high study", func(r *CreateEntryRequest) { r.StudyHours = 24.1 }},
+		{"negative countdown", func(r *CreateEntryRequest) { r.ExamCountdownDays = -1 }},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := valid
+			tt.mutate(&request)
+			if _, err := validateAndSanitize(request); err == nil {
+				t.Fatal("expected validation error")
+			}
+		})
+	}
+}
+
+func TestServiceRejectsInvalidUserQueries(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	service := NewService(store)
+	ctx := context.Background()
+
+	if _, err := service.ListEntries(ctx, " "); err == nil {
+		t.Fatal("expected ListEntries to reject empty user id")
+	}
+	if _, err := service.GetTrends(ctx, " "); err == nil {
+		t.Fatal("expected GetTrends to reject empty user id")
+	}
+	if _, err := service.GetAnalysis(ctx, "", "student-1"); err == nil {
+		t.Fatal("expected GetAnalysis to reject empty entry id")
+	}
+	if _, err := service.GetAnalysis(ctx, "entry-1", " "); err == nil {
+		t.Fatal("expected GetAnalysis to reject empty user id")
+	}
+	if _, err := service.GetAnalysis(ctx, "missing-entry", "student-1"); err == nil {
+		t.Fatal("expected GetAnalysis to reject missing entry")
+	}
+	if _, err := service.GetCopingGuidance(ctx, " "); err == nil {
+		t.Fatal("expected GetCopingGuidance to reject empty user id")
 	}
 }
 
