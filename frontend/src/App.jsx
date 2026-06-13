@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
 const defaultApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-const defaultUserId = import.meta.env.VITE_DEFAULT_USER_ID || 'student-1'
+const defaultUserId = import.meta.env.VITE_DEFAULT_USER_ID || 'Surya'
 
 const moodFaces = ['🙂', '😌', '😐', '😟', '😩', '😵']
 const moodLabels = {
@@ -883,7 +883,7 @@ function App() {
                   </label>
                   <label>
                     {t.userId}
-                    <input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="student-1" />
+                    <input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="Surya" />
                   </label>
                 </form>
               </div>
@@ -894,7 +894,7 @@ function App() {
             {activeTab === 'home' && (
               <div className="tab-view home-view fade-in">
                 <section className="welcome-greeting-section">
-                  <h2>{lang === 'hi' ? 'नमस्ते Alex!' : 'Hello Alex!'}</h2>
+                  <h2>{lang === 'hi' ? 'नमस्ते Surya!' : 'Hello Surya!'}</h2>
                   <p>{t.howAreYou}</p>
                 </section>
 
