@@ -203,6 +203,88 @@ func TestCreateEntryRejectsTrailingJSON(t *testing.T) {
 	}
 }
 
+func TestServerHandlesOptionsPreflight(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServerWithConfig(store, ServerConfig{
+		AllowedOrigins: []string{"https://wellness.example"},
+	})
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodOptions, "/v1/entries", nil)
+	request.Header.Set("Origin", "https://wellness.example")
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	if got := recorder.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, OPTIONS" {
+		t.Fatalf("unexpected CORS methods header %q", got)
+	}
+}
+
+func TestHTTPRejectsUnsupportedMethods(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServer(store)
+	tests := []struct {
+		name   string
+		method string
+		path   string
+	}{
+		{"health post", http.MethodPost, "/healthz"},
+		{"entries delete", http.MethodDelete, "/v1/entries"},
+		{"trends post", http.MethodPost, "/v1/trends"},
+		{"analysis post", http.MethodPost, "/v1/analysis"},
+		{"coping post", http.MethodPost, "/v1/coping"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequest(tt.method, tt.path, nil)
+			server.ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusMethodNotAllowed {
+				t.Fatalf("expected 405, got %d: %s", recorder.Code, recorder.Body.String())
+			}
+		})
+	}
+}
+
+func TestHTTPRejectsMissingQueryParameters(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServer(store)
+	tests := []struct {
+		name string
+		path string
+	}{
+		{"list entries missing user", "/v1/entries"},
+		{"analysis missing user", "/v1/analysis?entry_id=entry-1"},
+		{"analysis missing entry", "/v1/analysis?user_id=student-1"},
+		{"coping missing user", "/v1/coping"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			server.ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", recorder.Code, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func mustKey(t *testing.T) []byte {
 	t.Helper()
 
