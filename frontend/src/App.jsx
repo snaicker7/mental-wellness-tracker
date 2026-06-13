@@ -864,8 +864,8 @@ function App() {
           <div className="login-card fade-in">
             <div className="login-header">
               <span className="login-logo-icon">🧘</span>
-              <h1>${lang === 'en' ? 'Wellness Tracker' : 'कल्याण ट्रैकर'}</h1>
-              <p>${lang === 'en' ? 'Track mood, stress, and habits securely' : 'मूड, तनाव और आदतों को सुरक्षित रूप से ट्रैक करें'}</p>
+              <h1>{lang === 'en' ? 'Wellness Tracker' : 'कल्याण ट्रैकर'}</h1>
+              <p>{lang === 'en' ? 'Track mood, stress, and habits securely' : 'मूड, तनाव और आदतों को सुरक्षित रूप से ट्रैक करें'}</p>
             </div>
 
             <div className="auth-tabs" role="tablist">
@@ -876,7 +876,7 @@ function App() {
                 className={`auth-tab-btn ${authMode === 'login' ? 'active' : ''}`}
                 onClick={() => setAuthMode('login')}
               >
-                ${lang === 'en' ? 'Login' : 'लॉग इन'}
+                {lang === 'en' ? 'Login' : 'लॉग इन'}
               </button>
               <button 
                 type="button" 
@@ -885,13 +885,13 @@ function App() {
                 className={`auth-tab-btn ${authMode === 'signup' ? 'active' : ''}`}
                 onClick={() => setAuthMode('signup')}
               >
-                ${lang === 'en' ? 'Sign Up' : 'साइन अप'}
+                {lang === 'en' ? 'Sign Up' : 'साइन अप'}
               </button>
             </div>
 
             <form onSubmit={handleAuthSubmit} className="login-form">
               <div className="form-group">
-                <label htmlFor="auth-username">${lang === 'en' ? 'Username' : 'उपयोगकर्ता नाम'}</label>
+                <label htmlFor="auth-username">{lang === 'en' ? 'Username' : 'उपयोगकर्ता नाम'}</label>
                 <input
                   type="text"
                   id="auth-username"
@@ -903,7 +903,7 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="auth-password">${lang === 'en' ? 'Password' : 'पासवर्ड'}</label>
+                <label htmlFor="auth-password">{lang === 'en' ? 'Password' : 'पासवर्ड'}</label>
                 <input
                   type="password"
                   id="auth-password"
@@ -915,7 +915,7 @@ function App() {
               </div>
 
               <button type="submit" className="login-submit-btn">
-                ${authMode === 'login' 
+                {authMode === 'login' 
                   ? (lang === 'en' ? 'Access Dashboard' : 'डैशबोर्ड खोलें')
                   : (lang === 'en' ? 'Create Account' : 'खाता बनाएँ')}
               </button>
