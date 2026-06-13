@@ -132,6 +132,77 @@ func TestTrendsRejectMissingUserID(t *testing.T) {
 	}
 }
 
+func TestServerAppliesSecurityHeadersAndRestrictedCORS(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServerWithConfig(store, ServerConfig{
+		AllowedOrigins: []string{"https://wellness.example"},
+	})
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	request.Header.Set("Origin", "https://wellness.example")
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	if got := recorder.Header().Get("Access-Control-Allow-Origin"); got != "https://wellness.example" {
+		t.Fatalf("expected restricted CORS origin, got %q", got)
+	}
+	if got := recorder.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Fatalf("expected nosniff header, got %q", got)
+	}
+	if got := recorder.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("expected no-store cache header, got %q", got)
+	}
+
+	blockedRecorder := httptest.NewRecorder()
+	blockedRequest := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	blockedRequest.Header.Set("Origin", "https://attacker.example")
+	server.ServeHTTP(blockedRecorder, blockedRequest)
+
+	if got := blockedRecorder.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("expected disallowed origin to receive no CORS header, got %q", got)
+	}
+}
+
+func TestCreateEntryRejectsOversizedPayload(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServerWithConfig(store, ServerConfig{MaxJSONBodyBytes: 32})
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/v1/entries", strings.NewReader(`{"user_id":"student-1","entry_text":"too large","mood_level":5,"energy_level":5}`))
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", recorder.Code)
+	}
+}
+
+func TestCreateEntryRejectsTrailingJSON(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "journals.json"), mustKey(t))
+	if err != nil {
+		t.Fatalf("NewFileStore() error = %v", err)
+	}
+
+	server := NewServer(store)
+	recorder := httptest.NewRecorder()
+	body := `{"user_id":"student-1","entry_text":"I studied calmly today.","mood_level":6,"energy_level":5}{}`
+	request := httptest.NewRequest(http.MethodPost, "/v1/entries", strings.NewReader(body))
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", recorder.Code)
+	}
+}
+
 func mustKey(t *testing.T) []byte {
 	t.Helper()
 

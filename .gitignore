@@ -19,6 +19,7 @@ dist/
 
 # Go
 /api
+.gocache/
 *.exe
 *.test
 /data/*.db

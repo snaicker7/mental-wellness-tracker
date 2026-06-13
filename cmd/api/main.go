@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"mental-wellness-tracker/internal/journal"
 )
@@ -42,7 +43,15 @@ func main() {
 
 	server := journal.NewServer(repo)
 	log.Printf("mental wellness tracker API listening on %s", addr)
-	if err := http.ListenAndServe(addr, server); err != nil {
+	httpServer := &http.Server{
+		Addr:              addr,
+		Handler:           server,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

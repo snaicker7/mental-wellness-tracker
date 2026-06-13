@@ -109,12 +109,13 @@ Do not include any other markdown formatting outside of the JSON block.`,
 		return CopingGuidance{}, err
 	}
 
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", apiKey)
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return CopingGuidance{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Goog-Api-Key", apiKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)

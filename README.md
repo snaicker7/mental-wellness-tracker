@@ -117,7 +117,8 @@ It now supports PostgreSQL persistence, Docker packaging, and Render deployment.
 1. Generate a base64-encoded 32-byte encryption key.
 2. Set `JOURNAL_ENCRYPTION_KEY` to that value.
 3. Set `DATABASE_URL` to a PostgreSQL connection string if you want Postgres, or leave it empty to use the local encrypted file store.
-4. Start the API with `go run ./cmd/api`.
+4. Set `ALLOWED_ORIGINS` to the browser origins that may call the API. Local Vite origins are allowed by default.
+5. Start the API with `go run ./cmd/api`.
 
 Example environment variables:
 
@@ -125,6 +126,7 @@ Example environment variables:
 JOURNAL_ENCRYPTION_KEY=...base64-32-bytes...
 JOURNAL_DATA_FILE=data/journals.json
 ADDR=:8080
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ### Docker
@@ -139,7 +141,7 @@ docker run -p 8080:8080 -e JOURNAL_ENCRYPTION_KEY=... -e DATABASE_URL=... mental
 ### Render
 
 The `render.yaml` blueprint provisions a web service and managed PostgreSQL database.
-Set `JOURNAL_ENCRYPTION_KEY` as a secret in the Render dashboard, then deploy the repository with the blueprint.
+Set `JOURNAL_ENCRYPTION_KEY` and `ALLOWED_ORIGINS` as secrets in the Render dashboard, then deploy the repository with the blueprint. Use your deployed frontend URL for `ALLOWED_ORIGINS`.
 
 ### Frontend chart
 
@@ -161,6 +163,7 @@ Set `VITE_API_BASE_URL` if the frontend is not talking to `http://localhost:8080
 - `POST /v1/entries` creates a journal entry.
 - `GET /v1/entries?user_id=student-1` lists saved entries for a student.
 - `GET /v1/trends?user_id=student-1` returns chart-ready daily mood and stress averages.
+- API responses include security headers, restricted CORS, no-store cache headers, request timeouts, and a 1 MB JSON body limit.
 
 ### Payload
 

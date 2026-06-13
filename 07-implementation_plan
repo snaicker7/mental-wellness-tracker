@@ -1,0 +1,56 @@
+# Implementation Plan - Secure User Authentication & Login Page (Issue 07)
+
+We will implement a premium, theme-cohesive Login and Sign Up screen in the React frontend. Unauthenticated users will be directed to this screen. Once authenticated, the user's session will be persisted in `localStorage` and their custom username will be set as the active `userId` for journal entries.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Authentication Options**:
+> 1. **Option A (Frontend Session)**: A clean simulated authentication store in React. Entering any credentials creates a local session and logs the user in, using their username to partition data in the backend database. (No Go backend modifications required).
+> 2. **Option B (Database-backed Auth)**: Full credentials verification by adding `/v1/signup` and `/v1/login` endpoints to the Go backend, storing hashed passwords in the database.
+>
+> *Recommendation*: We recommend **Option A** as a fast and lightweight solution that keeps data separate by username without complicating the backend server setup, but we can implement Option B if database-enforced security is required.
+
+---
+
+## Proposed Changes
+
+### Frontend (React & Styles)
+
+#### [MODIFY] [App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+1. **State Additions**:
+   - `isAuthenticated` (checks `localStorage.getItem('auth_session')` on load).
+   - `authMode` (`'login'` or `'signup'`).
+   - `authUsername` and `authPassword` form states.
+2. **Logic Additions**:
+   - `handleAuthSubmit`: Logs the user in, sets `userId` state to `authUsername`, writes session details to `localStorage`, and triggers dashboard loading.
+   - `handleLogout`: Clears `localStorage` session and resets states back to `'landing'`.
+3. **Login View Rendering**:
+   - Render a beautiful overlay container if `!isAuthenticated`.
+   - Layout features a card with username/password fields, toggle tabs for Switch mode, and action buttons.
+4. **Integration**:
+   - Use the authenticated username as the dynamic partition key (`userId`) instead of falling back to default strings.
+
+#### [MODIFY] [styles.css](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/styles.css)
+1. **Login Card Styles**:
+   - Styling for `.login-container`, `.login-card`, `.auth-tabs`, `.auth-btn`, and input fields.
+   - Micro-interactions on buttons, hover state shadows, and background gradients matching the wellness theme.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run production build command:
+  ```powershell
+  npm.cmd run build
+  ```
+
+### Manual Verification
+1. Access the web app. Verify that the **Login / Signup** view appears first (instead of the dashboard or landing screen).
+2. Toggle between **Login** and **Sign Up** modes.
+3. Enter `Surya` as the username and click Login. Confirm it successfully authenticates, takes the user to the Landing Screen, and displays *"Welcome back, Surya"* and *"Hello Surya!"* on the dashboard.
+4. Refresh the page. Verify the session persists.
+5. Click **Logout** (accessible via the settings panel) and verify it logs out and clears session storage.
