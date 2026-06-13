@@ -1,0 +1,60 @@
+# Implementation Plan - Generate Safe Coping Guidance
+
+Add a conversational/guidance path that turns current wellness context and stress analysis into practical, empathetic, and safe coping guidance (breathing, mindfulness, and motivational prompts). Guardrails will filter unsafe input and direct users to professional helplines.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Safety Guardrails**: If any input text (current journal entry text) matches crisis-related keywords (self-harm, suicide, doctor, diagnose, prescribe), we bypass typical coping tips and display a safe crisis support banner and disclaimer message directing the student to professional help (e.g., Vandrevala Foundation or AASRA helper lines).
+>
+> We will add the API endpoint `GET /v1/coping?user_id=<user_id>` that retrieves the latest journal entry for the user, checks it for safety, and generates a personalized guidance card payload containing:
+> - `motivational_prompt`
+> - `breathing_exercise`
+> - `mindfulness_activity`
+> - `is_safe` (boolean flag to indicate if crisis response is triggered)
+
+## Open Questions
+
+None.
+
+## Proposed Changes
+
+### Backend (Go)
+
+#### [MODIFY] [internal/journal/types.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/types.go)
+- Add `CopingResponse` and `CopingGuidance` structs.
+
+#### [NEW] [internal/journal/coping.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/coping.go)
+- Implement safety filter / guardrail rules (detecting crisis-related keywords).
+- Implement `GenerateCoping(ctx context.Context, entry Entry) (CopingResponse, error)` combining rules-based heuristics and Gemini LLM.
+- Implement rules-based local fallback templates for breathing, mindfulness, and motivational prompts based on mood/stress levels.
+
+#### [MODIFY] [internal/journal/service.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/service.go)
+- Implement `GetCopingGuidance(ctx context.Context, userID string) (CopingResponse, error)` that fetches the user's latest journal entry, and evaluates coping guidance.
+
+#### [MODIFY] [internal/journal/http.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/http.go)
+- Register `GET /v1/coping` endpoint.
+- Implement handler `handleCoping` fetching guidance.
+
+#### [NEW] [internal/journal/coping_test.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/coping_test.go)
+- Unit tests covering safe content generation, safety keyword filtering (crisis triggers), and correct guidance formats.
+
+### Frontend (React)
+
+#### [MODIFY] [frontend/src/App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+- Load/fetch latest coping guidance on dashboard load.
+- Render a premium "Daily Companion Guide" card in the right column of the dashboard.
+- Display a dedicated emergency crisis/helpline warning banner in the card if `is_safe` is flagged (crisis keywords detected).
+- Add tabs or accordion selectors for "Breathing Exercise", "Mindfulness Activity", and "Empathetic Companionship".
+
+## Verification Plan
+
+### Automated Tests
+- Run Go backend tests:
+  ```powershell
+  & 'C:\Program Files\Go\bin\go.exe' test ./internal/journal/...
+  ```
+
+### Manual Verification
+- Run backend and frontend, post an entry with low mood, verify coping guidance fits the mood.
+- Post an entry containing "suicide" or "harm myself" and verify the card turns into a warm crisis/disclaimer box with contact info instead.

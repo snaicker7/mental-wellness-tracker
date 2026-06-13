@@ -1,0 +1,106 @@
+# Implementation Plan - Mobile-first Polished Mood Dashboard (Issue 06)
+
+Implement a high-fidelity, mobile-first design matching the visual language of [image.png](file:///c:/Users/Surya/Documents/mental-wellness-tracker/image.png). We will reorganize the React frontend into a premium single-page application with a tab-based view controller, matching the three mockup screens: Landing Screen, Home Dashboard, and Mood Calendar.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **View Controllers**:
+> We will introduce a view controller state `activeTab` with the following screens:
+> 1. **`landing` (Landing Screen)**: Playful colored shapes with cartoon expressions, large bold header, and a pill button CTA: *"Not Sure About Your Mood? Let Us Help! →"*.
+> 2. **`home` (Home Dashboard)**: Date header, student greeting, quick-mood selection buttons, metrics grid (Sleep Duration bar graphs, Stress Indicator sparklines, interactive Yes/No Quiz), and the Journal entry form.
+> 3. **`calendar` (Mood Calendar)**: Month day grid (days with entries show the color-coded emoji), dominant Monthly Mood Summary card, and supplementary metrics (Activity steps, Therapy sessions, Focus score).
+> 4. **`trends` (Insights & Coping)**: Preserves the detailed Weekly Mood Pulse SVG chart, Stress Trigger modal triggers, and the daily Coping Companion guide.
+>
+> **Interactive Quiz**:
+> We will implement a mock interactive quiz card that allows the student to answer Yes/No questions (e.g., *"Have you been sleeping well recently?"*, *"Are you studying more than 8 hours daily?"*) and provides summary guidance at the end.
+>
+> **Interactive Metrics**:
+> The Sleep Duration and Stress Indicator widgets will dynamically render mini-bar-graphs or sparklines using the actual database entries loaded from the backend!
+
+---
+
+## Open Questions
+
+None.
+
+---
+
+## Proposed Changes
+
+### Frontend (React)
+
+#### [MODIFY] [App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+1. Add new bilingual translation keys for the landing screen and dashboard components:
+   - Landing: `landingTitle`, `letUsHelp`, `notSureMood`.
+   - Widgets: `sleepTitle`, `stressTitle`, `quizTitle`, `questionNum`, `yes`, `no`.
+   - Calendar: `monthlySummary`, `steps`, `sessions`, `focusScore`, `activity`, `therapy`, `discipline`.
+2. Add state hook:
+   - `activeTab` (default `'landing'`)
+   - `quizStep` (int, current question index)
+   - `quizAnswers` (array of booleans)
+3. Implement a Quiz engine with 4 wellness questions in English and Hindi.
+4. Render the **Landing Screen** if `activeTab === 'landing'`:
+   - Display a floating layout of stylized shape vectors (cute circles, triangles, stars with smiling/sleepy/angry expressions).
+   - Display the pill CTA button that switches `activeTab` to `'home'`.
+5. Render the **App Layout & Bottom Navigation Bar** if `activeTab !== 'landing'`:
+   - Bottom navbar with 4 tabs: Home (dashboard), Calendar, Trends (charts), Coping (guide).
+6. Under the **Home View**:
+   - Display profile row ("Welcome back student-1") and date ("Jun 13, 2026").
+   - Display greeting: "Hello Alex! How are you feeling today?"
+   - Display interactive quick-mood buttons with emojis.
+   - Display the metrics grid:
+     - **Sleep Duration widget**: dynamically parses sleep hours from the last 6 entries and draws miniature inline SVG vertical bar graphs.
+     - **Stress Indicator widget**: displays stress score text ("Low" / "Medium" / "High") and draws miniature inline SVG sparklines of the stress trend.
+     - **Quiz Card widget**: allows the student to answer Yes/No questions, showing completion results.
+     - **Journal Form widget**: places the journal entry form neatly underneath the widgets.
+7. Under the **Calendar View**:
+   - Render a grid of the current month (June 2026). Check if any loaded database entry matches the date; if so, render the corresponding colored emoji circle.
+   - Render **Monthly Mood Summary**: calculates the dominant mood of the month, displaying a custom description and large illustration face.
+   - Render supplementary tracking metrics row: Activity Steps, Therapy Sessions, Discipline Focus Score.
+
+#### [MODIFY] [styles.css](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/styles.css)
+1. **Landing Screen Styles**:
+   - Floating shape animations, clean flex headings, pill button.
+2. **Metrics Grid Styles**:
+   - Grid layout matching `image.png` (2 columns on tablet/desktop, stackable on mobile).
+   - Sleep Duration card: light peach/orange background (`#ffe8d6`), bed icon.
+   - Stress Indicator card: light purple/lavender background (`#ebdfff`), sad emoji icon.
+   - Quiz card: light green/teal background (`#d2f8d2`), star icon.
+3. **Monthly Calendar Grid**:
+   - Days headers (Sun - Sat), cells styled with soft backgrounds, colored circles for logged days.
+   - dominent Monthly Mood Summary card styling (`#c6f0b6` light green, large expression smile).
+4. **Bottom Navigation Bar**:
+   - Fixed at bottom of viewport, glassmorphism backdrop, active tab highlight.
+5. **General Playful Wellness Theme**:
+   - Heavy rounded corners (`border-radius: 28px` or `32px`).
+   - Bold fonts (`font-weight: 700`, Trebuchet MS or Outfit).
+   - Gentle floating card micro-animations on hover.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run backend verification:
+  ```powershell
+  go test ./...
+  ```
+- Run frontend build checks:
+  ```powershell
+  npm.cmd run build
+  ```
+
+### Manual Verification
+1. Open the application. Ensure the **Landing Screen** is displayed first with the animated shapes and the bold CTA button.
+2. Click the CTA. Verify it transitions smoothly to the Home Dashboard, Date, and Greeting.
+3. Interact with the bottom navbar to navigate through all tabs: Home, Calendar, Trends, Coping.
+4. On the Home Dashboard:
+   - Click Yes/No on the Quiz card and verify it advances to the next question.
+   - Submit a journal entry. Verify that the miniature sleep bar chart and stress sparkline instantly update on the card.
+5. Go to the Calendar page:
+   - Verify that the days on which entries were logged are shown with colored emoji circles.
+   - Verify that the dominant mood summary card displays correct text.
+6. Toggle the language switch between English and Hindi, and verify that the Landing page, widgets, and navigation bar translate accurately.

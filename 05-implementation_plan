@@ -1,0 +1,64 @@
+# Implementation Plan - Production Hardening
+
+Add multilingual support (English and Hindi translations) to the frontend, establish a GitHub Actions CI workflow for backend/frontend validation, add `vercel.json` routing configuration for production SPAs, and execute WCAG-minded accessibility upgrades across main flows.
+
+## User Review Required
+
+> [!NOTE]
+> We will add a language toggle button (EN / हिन्दी) at the top of the dashboard. All core strings, labels, and text will dynamically translate.
+>
+> We will add a GitHub Actions CI workflow in `.github/workflows/ci.yml` that runs on every push/PR to validate Go test suites, Go static analysis, and Vite frontend builds.
+
+## Open Questions
+
+None.
+
+## Proposed Changes
+
+### CI/CD Workflow
+
+#### [NEW] [.github/workflows/ci.yml](file:///c:/Users/Surya/Documents/mental-wellness-tracker/.github/workflows/ci.yml)
+- Create a GitHub Actions workflow that:
+  - Runs on `main` and `master` branch pushes / pull requests.
+  - Performs Go setup, downloads dependencies, and runs `go test ./...` and `go vet ./...`.
+  - Performs Node.js setup, runs `npm ci` / `npm install`, and runs `npm run build` inside the `frontend` folder.
+
+### Frontend Deployment
+
+#### [NEW] [frontend/vercel.json](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/vercel.json)
+- Add a routing redirect to resolve SPA routing fallbacks on Vercel:
+  ```json
+  {
+    "rewrites": [
+      { "source": "/(.*)", "destination": "/" }
+    ]
+  }
+  ```
+
+### Multilingual & Accessibility Hardening
+
+#### [MODIFY] [frontend/src/App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+- Declare a translation dictionary for English (`en`) and Hindi (`hi`) for all headers, labels, descriptions, and buttons.
+- Render language switcher buttons next to the avatar top-bar in `App.jsx`.
+- Implement `lang` hook state, dynamically replacing all UI content references.
+- Audit ARIA tags, button focus targets, and label semantic tags.
+
+#### [MODIFY] [frontend/src/styles.css](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/styles.css)
+- Style the language switcher buttons (glassmorphism tabs next to top avatar).
+
+## Verification Plan
+
+### Automated Tests
+- Run backend test suite:
+  ```powershell
+  & 'C:\Program Files\Go\bin\go.exe' test ./...
+  ```
+- Run frontend build checks:
+  ```powershell
+  Set-Location frontend
+  npm.cmd run build
+  ```
+
+### Manual Verification
+- Deploy/simulate language switches and ensure all text changes to high-quality Hindi translation.
+- Ensure the keyboard tab navigation through the switcher buttons and trend tooltip cards operates cleanly.

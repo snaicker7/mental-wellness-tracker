@@ -1,0 +1,6 @@
+.git
+.github-copilot
+.vscode
+data
+bin
+*.log

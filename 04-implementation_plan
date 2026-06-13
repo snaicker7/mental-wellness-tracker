@@ -1,0 +1,52 @@
+# Implementation Plan - Show Mood and Stress Progress Trends
+
+Add interactive, accessible tooltip overlays, keyboard-navigable focus targets, screen-reader details, and visual guide lines on hover/focus to the `Weekly mood pulse` SVG chart. Expand backend tests to verify trend aggregation.
+
+## User Review Required
+
+> [!NOTE]
+> We will add an interactive hover & focus overlay system in React. When a student hovers over or focuses a data point:
+> - A dashed vertical line aligns with the date column.
+> - A premium HTML floating tooltip appears above the date, showing detailed averages for Mood, Stress, and Energy.
+> - Keyboard users can press `Tab` to navigate through individual date columns on the chart.
+>
+> We will add backend tests in `service_test.go` to explicitly verify the math of daily averages (mood, stress, energy) and sorting of trend points.
+
+## Open Questions
+
+None.
+
+## Proposed Changes
+
+### Backend (Go)
+
+#### [MODIFY] [internal/journal/service_test.go](file:///c:/Users/Surya/Documents/mental-wellness-tracker/internal/journal/service_test.go)
+- Add a new unit test `TestGetTrendsAggregation` to verify correct averaging of multiple entries on the same day and chronological sorting across multiple days.
+
+### Frontend (React)
+
+#### [MODIFY] [frontend/src/App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+- Modify `TrendChart` component:
+  - Add state `activeIndex` to keep track of the hovered/focused date point.
+  - Wrap date data points in a `<g>` container with `tabIndex="0"` and descriptive `aria-label` labels.
+  - Implement full-height transparent `<rect>` elements inside each `<g>` to act as interactive hover hit-zones.
+  - Render an absolute-positioned `.chart-tooltip` box over the chart.
+  - Draw a `<line>` showing a dashed guide vertical column highlight when a point is hovered or focused.
+
+#### [MODIFY] [frontend/src/styles.css](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/styles.css)
+- Add styling for the floating `.chart-tooltip` popup (colors, gradients, shadow, absolute positioning).
+- Ensure `.chart-point-group:focus` or `.chart-point-group:hover` visual highlights look polished.
+
+## Verification Plan
+
+### Automated Tests
+- Run Go backend tests to verify new trend aggregation calculations:
+  ```powershell
+  & 'C:\Program Files\Go\bin\go.exe' test ./internal/journal/...
+  ```
+
+### Manual Verification
+- View the chart, hover over and tab (`Tab` key) through each date column, and verify:
+  - Tooltip card pops up showing detailed mood, stress, and energy metrics.
+  - Vertical guide dashed line highlights the current date column.
+  - Screen reader attributes (`aria-label`) are fully populated.

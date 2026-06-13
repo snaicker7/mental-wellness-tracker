@@ -1,0 +1,84 @@
+# Implementation Plan - Mobile-first Polished Mood Dashboard (Issue 06)
+
+We will reorganize the React frontend into a premium, single-page application with a tab-based view controller, matching the design details in [issues/06-mobile-first-polished-mood-dashboard.md](file:///c:/Users/Surya/Documents/mental-wellness-tracker/issues/06-mobile-first-polished-mood-dashboard.md) and [image.png](file:///c:/Users/Surya/Documents/mental-wellness-tracker/image.png). We will also fix the syntax errors and missing definitions in [App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx).
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Reorganizing into Tabs**:
+> Currently, the app renders all components on a single long scrolling page. We propose split-screen views controlled by a bottom navigation bar:
+> 1. **`landing` (Landing Screen)**: Renders a friendly welcome screen with cartoon-expression floating shapes and a bold CTA: *"Not Sure About Your Mood? Let Us Help! →"*.
+> 2. **`home` (Home Dashboard)**: Date header, greeting, quick-mood selection buttons, interactive metrics grid (Sleep, Stress, Quiz), and the Journal entry form.
+> 3. **`calendar` (Mood Calendar)**: Month day grid showing color-coded emoji logs, dominant Monthly Mood Summary card, and supplementary tracking metrics (Steps, Therapy, Focus score).
+> 4. **`trends` (Insights & Analytics)**: Preserves the Weekly Mood Pulse SVG chart and recent journal entries list.
+> 5. **`coping` (Companion Guide)**: Displays the daily Coping Companion guide and crisis helpline support resources.
+
+> [!IMPORTANT]
+> **Interactive Quiz Widget**:
+> We will add an interactive wellness quiz card in the metrics grid. Answering Yes/No to 4 simple questions gives the user personalized wellness advice based on their answers.
+
+---
+
+## Proposed Changes
+
+### Frontend (React & Styles)
+
+#### [MODIFY] [App.jsx](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/App.jsx)
+1. **Fix Syntax Error & Missing `moodColors`**:
+   - Resolve syntax error at line 9: `hi: [...]const translations = {` by closing `moodLabels` object properly.
+   - Define `moodColors = ['#a5f39b', '#a3d9ff', '#d7ccff', '#ffe8d6', '#ff9470', '#e04c3f']` below `moodLabels`.
+   - Remove the corrupted duplicate block starting with `}ल्पलाइन",` at lines 218-252.
+2. **State Additions**:
+   - `activeTab` (defaults to `'landing'`) to control the SPA view.
+   - `quizStep` (defaults to `0`) and `quizAnswers` (defaults to `[]`) for the interactive quiz.
+3. **Landing View**:
+   - Stylized inline SVG shapes (smiling circle, sleepy cloud, neutral star) floating using CSS keyframe animations.
+   - Large bold call-to-action button that transitions the tab to `'home'`.
+4. **Metrics Grid on Home Dashboard**:
+   - **Sleep Duration card**: Shows hours and minutes, and uses SVG to render a 6-bar miniature chart of the latest entries.
+   - **Stress Indicator card**: Renders a miniature SVG sparkline showing stress trends over the last 6 entries.
+   - **Quiz Card**: Multi-step Yes/No questionnaire with a completion state and advice.
+   - **Journal Form**: Neatly placed under the grid.
+5. **Calendar View**:
+   - Render a complete June 2026 grid.
+   - If an entry exists for a day, display its corresponding mood emoji and background color.
+   - Clicking a logged day opens the Journal Insights modal for that entry.
+   - **Monthly Mood Summary Card**: Computes dominant mood and showcases description and illustration.
+   - **Supplementary Metrics**: Custom metrics row (Activity Steps, Therapy sessions, Focus score).
+6. **Bottom Navbar**:
+   - Rendered at the bottom of the screen when `activeTab !== 'landing'`. Shows icons/emojis and labels for Home, Calendar, Trends, and Coping.
+
+#### [MODIFY] [styles.css](file:///c:/Users/Surya/Documents/mental-wellness-tracker/frontend/src/styles.css)
+1. **Responsive Viewport Control**: Ensure sections adjust cleanly to phone, tablet, and desktop screens.
+2. **Landing Screen Styles**: Add rules for the hero CTA, landing container, and keyframe animations (`floatUp`, `pulseScale`, `drift`) for SVG shapes.
+3. **Metrics Grid Layout**: Style the 3-column dashboard grid (stacked on mobile).
+4. **Card-specific Background Colors**:
+   - Sleep: Soft orange/peach (`#ffe8d6`).
+   - Stress: Soft lavender/purple (`#ebdfff`).
+   - Quiz: Soft green/teal (`#d2f8d2`).
+5. **Bottom Glassmorphism Navbar**: Fixed position, backdrop filter, active tab pill indicators, and hover transitions.
+6. **Calendar Grid**: Styled cells (grey circles for empty, filled colored circles for logged days), monthly summary panel (`#c6f0b6`), and supplementary metrics row.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run Go backend tests:
+  ```powershell
+  go test ./...
+  ```
+- Run production build command:
+  ```powershell
+  npm.cmd run build
+  ```
+
+### Manual Verification
+1. Access the web app, verifying that it opens on the Landing Page.
+2. Click the CTA, verifying navigation to the Home Dashboard.
+3. Verify the bottom navbar switches views (Home, Calendar, Trends, Coping).
+4. Fill and submit a journal entry. Verify that the Sleep and Stress widgets automatically update their miniature SVGs.
+5. Navigate to the Calendar. Confirm logged days display the correct emoji, and clicking them opens the modal.
+6. Verify English / Hindi translations for all new elements.
